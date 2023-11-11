@@ -1,4 +1,5 @@
 import os.path
+import datetime
 
 from google.auth.transport.requests import Request
 from google.oauth2.credentials import Credentials
@@ -12,7 +13,7 @@ SCOPES = [
     "https://www.googleapis.com/auth/fitness.location.read",
 ]
 
-CREDS="creds.json"
+CREDS = "fetcher/creds_bemyak.json"
 
 
 def main():
@@ -31,20 +32,53 @@ def main():
             creds.refresh(Request())
         else:
             flow = InstalledAppFlow.from_client_secrets_file(CREDS, SCOPES)
-            creds = flow.run_local_server(port=0)
+            creds = flow.run_local_server(port=37585)
         # Save the credentials for the next run
         with open("token.json", "w") as token:
             token.write(creds.to_json())
 
+    # Print dataStreamId's
+
     # try:
-    #     service = build("fit", "v1", credentials=creds)
+    #     service = build("fitness", "v1", credentials=creds)
+    #     response = service.users().dataSources().list(userId="me").execute()
+    #     # print(json.dumps(response, sort_keys=True, indent=4))
+    #     for r in response.values():
+    #         for x in r:
+    #             print(x["dataStreamId"])
 
     #     # Retrieve the documents contents from the Docs service.
-    #     document = service.documents().get(documentId=DOCUMENT_ID).execute()
+    #     # document = service.documents().get(documentId=DOCUMENT_ID).execute()
 
-    #     print(f"The title of the document is: {document.get('title')}")
+    #     # print(f"The title of the document is: {document.get('title')}")
     # except HttpError as err:
     #     print(err)
+
+    dataSourceId = "raw:com.google.distance.delta:com.google.android.apps.fitness:Xiaomi:Mi-4c:dd56c804:user_input"
+    try:
+        service = build("fitness", "v1", credentials=creds)
+        response = (
+            service.users()
+            .dataSources()
+            .datasets()
+            .get(
+                userId="me",
+                datasetId=dataSourceId,
+                datasetId=datetime.datetime.now().isoformat(),
+            )
+            .execute()
+        )
+        # print(json.dumps(response, sort_keys=True, indent=4))
+        for r in response.values():
+            for x in r:
+                print(x["dataStreamId"])
+
+        # Retrieve the documents contents from the Docs service.
+        # document = service.documents().get(documentId=DOCUMENT_ID).execute()
+
+        # print(f"The title of the document is: {document.get('title')}")
+    except HttpError as err:
+        print(err)
 
 
 if __name__ == "__main__":
